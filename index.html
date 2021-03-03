@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Guru</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/Grid.css">
+    <link rel="stylesheet" href="css/ionicons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="row">
+                <!-- <img src="" alt="" class="logo"> -->
+                <h1 class="logo">Contract Guru</h1>
+                <ul class="main-nav">
+                    <li><a href="#">Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="hero-text-box">
+            <h1>Hassle Free Contract Management</h1>
+            <a class="btn btn-full" id="loginBtn" href="#login">Login</a>
+            <a class="btn btn-ghost" id="signupBtn" href="#signup">Signup</a>
+        </div>
+    </header>
+
+    <div class="modal" id="login">
+        <div class="modal-content">
+            <div class="close">+</div>
+            <h2>Log in</h2>
+            <form method="POST" action="/login">
+                <input type="email" name="email" id="email" placeholder="Email"><br>
+                <input type="password" name="password" id="password" placeholder="Password"><br>
+                <input type="submit" name="login" id="login" value="Login">
+            </form>
+        </div>
+    </div>
+    <div class="modal2" id="signup">
+        <div class="modal-content">
+            <div class="close2">+</div>
+            <h2>Sign Up</h2>
+            <form action="/signup" method="POST">
+                <input type="text" name="firstname" id="firstname" placeholder="First Name"><br>
+                <input type="text" name="lastname" id="lastname" placeholder="Last Name"><br>
+                <input type="email" name="signupEmail" id="signupEmail" placeholder="Email"><br>
+                <input type="password" name="signupPassword" id="signupPassword" placeholder="Password"><br>
+                <label for="department">Choose a Department: </label>
+                <select name="department" id="department" aria-placeholder="Choose a Department">
+                    <option value="finance">Finance</option>
+                    <option value="legal">Legal</option>
+                    <option value="business requester">Business Requester</option>
+                    <option value="owner">Owner</option>
+                    <option value="contract admin">Contract Administrator</option>
+                </select><br>
+                <input type="submit" name="signup" id="signup" value="Sign Up">
+            </form>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
+
