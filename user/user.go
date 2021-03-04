@@ -1,11 +1,28 @@
 package user
 
-var userMap map[string]User
-
-type User struct {
-	firstname  string
-	lastname   string
-	email      string
-	password   string
-	department int
+//DepartmentMap maps out the role to an integer for easier database access
+var DepartmentMap = map[string]int{
+	"business requester": businessRequester,
+	"owner":              owner,
+	"finance":            finance,
+	"legal":              legal,
+	"contract admin":     contractAdministrator,
 }
+
+//Data constructs the user information
+type Data struct {
+	UserID     int
+	Firstname  string
+	Lastname   string
+	Email      string
+	Password   string
+	Department int
+}
+
+const (
+	businessRequester = iota
+	owner
+	finance
+	legal
+	contractAdministrator
+)
