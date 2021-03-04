@@ -41,7 +41,8 @@ func index(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
-	tpl.ExecuteTemplate(w, "index.html", nil)
+	// tpl.ExecuteTemplate(w, "index.html", nil)
+	tpl.ExecuteTemplate(w, "index.html", userMap)
 }
 
 //check if user is currently logged in
@@ -49,15 +50,17 @@ func alreadyLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	cookie, err := r.Cookie("myCookie")
 	if err != nil {
 		fmt.Println(err)
+		cookie = &http.Cookie{
+			Name:  "myCookie",
+			Value: "",
+		}
 	}
+	http.SetCookie(w, cookie)
 	//send the cookie value for validation
 	_, err = secure.ParseToken(cookie.Value)
 	if err != nil {
-		//Delete the session from map and delete cookie
-		val := cookie.Value
-		cookie.MaxAge = -1
-		http.SetCookie(w, cookie)
-		delete(sessionMap, val)
+		//Delete the session from map
+		delete(sessionMap, cookie.Value)
 		return false
 	}
 	return true
@@ -71,7 +74,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 	//validate info
-	var currentUser user.Data
+	currentUser := userMap[email]
 	if _, ok := userMap[email]; !ok {
 		tpl.ExecuteTemplate(w, "redirect.html", "User is not found")
 		return
@@ -104,8 +107,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+	email := r.FormValue("signupEmail")
+	password := r.FormValue("signupPassword")
 	lastname := r.FormValue("lastname")
 	firstname := r.FormValue("firstname")
 	department := r.FormValue("department")
@@ -123,6 +126,8 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	userMap[email] = user.Data{Firstname: firstname, Password: string(bpassword), Lastname: lastname, Department: departmentID, Email: email, UserID: id}
 	//save in database
 
+	err = tpl.ExecuteTemplate(w, "redirect.html", "Please sign in again")
+	// log.Print(err)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {

@@ -23,14 +23,15 @@ var (
 func getEnv(k string) string {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error in loading .env file")
+		log.Fatalln(err)
 	}
 	return (os.Getenv(k))
 }
 
 //GenerateJWT generates JWT token for user sessions
 func GenerateJWT(c *MyClaims) (string, error) {
-	key = []byte(getEnv("JWT_KEY"))
+	// key = []byte(getEnv("JWT_KEY"))
+	key = []byte("thisismyjwtkey")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, c)
 	signedToken, err := token.SignedString(key)
 	if err != nil {
