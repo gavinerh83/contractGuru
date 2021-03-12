@@ -27,11 +27,11 @@ func init() {
 }
 
 func main() {
-	http.Handle("/resource/", http.StripPrefix("/resource", http.FileServer(http.Dir("./resource"))))
-	http.HandleFunc("/", index)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/signup", signup)
-	http.HandleFunc("/logout", logout)
+	http.Handle("/api/v1/users/resource/", http.StripPrefix("/api/v1/users/resource/", http.FileServer(http.Dir("/resource"))))
+	http.HandleFunc("/api/v1/users", index)
+	http.HandleFunc("/login", LoginUser)
+	http.HandleFunc("/signup", SignupUser)
+	http.HandleFunc("/logout", LogoutUser)
 	http.ListenAndServe(":8000", nil)
 }
 
@@ -41,8 +41,8 @@ func index(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
 		return
 	}
-	// tpl.ExecuteTemplate(w, "index.html", nil)
-	tpl.ExecuteTemplate(w, "index.html", userMap)
+	tpl.ExecuteTemplate(w, "index.html", nil)
+	// tpl.ExecuteTemplate(w, "index.html", userMap)
 }
 
 //check if user is currently logged in
@@ -66,70 +66,78 @@ func alreadyLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
+//LoginUser receives post form input
+func LoginUser(w http.ResponseWriter, r *http.Request) {
 	if alreadyLoggedIn(w, r) {
 		//redirect the user to the main page to sign in
+		http.Redirect(w, r, "/api/v1/users", http.StatusSeeOther)
+	}
+	if r.Method == http.MethodPost {
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+		//validate info
+		currentUser := userMap[email]
+		if _, ok := userMap[email]; !ok {
+			tpl.ExecuteTemplate(w, "redirect.html", "User is not found")
+			return
+		}
+		err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(password))
+		if err != nil {
+			tpl.ExecuteTemplate(w, "redirect.html", "Wrong password entered")
+			return
+		}
+		//generate sessionID
+		id := uuid.NewV4()
+		claim := &secure.MyClaims{
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
+			},
+			SessionID: id.String(),
+		}
+		signedToken, err := secure.GenerateJWT(claim)
+		if err != nil {
+			log.Println(err)
+		}
+		myCookie := &http.Cookie{
+			Name:  "myCookie",
+			Value: signedToken,
+		}
+		http.SetCookie(w, myCookie)
+		//store signed JWT in sessionMap
+		sessionMap[signedToken] = email
 		http.Redirect(w, r, "/home", http.StatusSeeOther)
 	}
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	//validate info
-	currentUser := userMap[email]
-	if _, ok := userMap[email]; !ok {
-		tpl.ExecuteTemplate(w, "redirect.html", "User is not found")
-		return
-	}
-	err := bcrypt.CompareHashAndPassword([]byte(currentUser.Password), []byte(password))
-	if err != nil {
-		tpl.ExecuteTemplate(w, "redirect.html", "Wrong password entered")
-		return
-	}
-	//generate sessionID
-	id := uuid.NewV4()
-	claim := &secure.MyClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
-		},
-		SessionID: id.String(),
-	}
-	signedToken, err := secure.GenerateJWT(claim)
-	if err != nil {
-		log.Println(err)
-	}
-	myCookie := &http.Cookie{
-		Name:  "myCookie",
-		Value: signedToken,
-	}
-	http.SetCookie(w, myCookie)
-	//store signed JWT in sessionMap
-	sessionMap[signedToken] = email
-	http.Redirect(w, r, "/home", http.StatusSeeOther)
+	http.Redirect(w, r, "/api/v1/users", http.StatusSeeOther)
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
-	email := r.FormValue("signupEmail")
-	password := r.FormValue("signupPassword")
-	lastname := r.FormValue("lastname")
-	firstname := r.FormValue("firstname")
-	department := r.FormValue("department")
-	//do some validation for unexpected characters
+//SignupUser receives post form values
+func SignupUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		email := r.FormValue("signupEmail")
+		password := r.FormValue("signupPassword")
+		lastname := r.FormValue("lastname")
+		firstname := r.FormValue("firstname")
+		department := r.FormValue("department")
+		//do some validation for unexpected characters
 
-	bpassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	if err != nil {
-		fmt.Println(err)
+		bpassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+		if err != nil {
+			fmt.Println(err)
+		}
+		//convert department string from form to integer
+		departmentID := user.DepartmentMap[department]
+		//create unique userid
+		id := len(userMap)
+		//save in server data structure
+		userMap[email] = user.Data{Firstname: firstname, Password: string(bpassword), Lastname: lastname, Department: departmentID, Email: email, UserID: id}
+		//save in database
+
+		err = tpl.ExecuteTemplate(w, "redirect.html", "Please sign in again")
 	}
-	//convert department string from form to integer
-	departmentID := user.DepartmentMap[department]
-	//create unique userid
-	id := len(userMap)
-	//save in server data structure
-	userMap[email] = user.Data{Firstname: firstname, Password: string(bpassword), Lastname: lastname, Department: departmentID, Email: email, UserID: id}
-	//save in database
-
-	err = tpl.ExecuteTemplate(w, "redirect.html", "Please sign in again")
-	// log.Print(err)
+	http.Redirect(w, r, "/api/v1/users", http.StatusSeeOther)
 }
 
-func logout(w http.ResponseWriter, r *http.Request) {
+func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	//link to logout button
+
 }
